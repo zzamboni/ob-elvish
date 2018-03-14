@@ -58,27 +58,28 @@ You can specify variables using the standard =:var= header argument:
 #+end_example
 
 You can use the =:use= header argument to specify modules which should
-be loaded with =use= before executing the code:
+be loaded with =use= before executing the code. You can specify multiple
+packages by separating them with commas:
 
 #+begin_example
-  ,#+begin_src elvish :use re
-    pprint (re:find '^(\S+)' "Hello there")
+  ,#+begin_src elvish :use re,str :exports none
+      pprint (re:find '^(\S+)' (str:to-lower "Hello there"))
   ,#+end_src
 
   #+RESULTS:
   ,#+begin_example
   [
-   &text=	Hello
+   &text=	hello
    &start=	0
    &end=	5
    &groups=	[
      [
-      &text=	Hello
+      &text=	hello
       &start=	0
       &end=	5
      ]
      [
-      &text=	Hello
+      &text=	hello
       &start=	0
       &end=	5
      ]
