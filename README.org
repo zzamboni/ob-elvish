@@ -1,6 +1,9 @@
-#+title: Org Babel functions for Elvish
+#+title: Org Babel functions for [[https://elvish.io/][Elvish]]
 #+author: Diego Zamboni
 #+email: diego@zzamboni.org
+
+This package provides the ability to execute source code blocks
+written in the [[https://elvish.io/][Elvish]] shell language within an org-mode buffer.
 
 * Table of Contents                                            :TOC:noexport:
 - [[#installation][Installation]]
