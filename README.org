@@ -49,9 +49,9 @@ output in a results block below:
 You can specify variables using the standard =:var= header argument:
 
 #+begin_example
-  #+begin_src elvish :var n=3
+  ,#+begin_src elvish :var n=3
     put "The result is "(* $n 5)
-  #+end_src
+  ,#+end_src
 
   #+RESULTS:
   : ▶ 'The result is 15'
@@ -61,9 +61,9 @@ You can use the =:use= header argument to specify modules which should
 be loaded with =use= before executing the code:
 
 #+begin_example
-  #+begin_src elvish :use re
+  ,#+begin_src elvish :use re
     pprint (re:find '^(\S+)' "Hello there")
-  #+end_src
+  ,#+end_src
 
   #+RESULTS:
   ,#+begin_example
