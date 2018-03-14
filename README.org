@@ -1,0 +1,88 @@
+#+title: Org Babel functions for Elvish
+#+author: Diego Zamboni
+#+email: diego@zzamboni.org
+
+* Table of Contents                                            :TOC:noexport:
+- [[#installation][Installation]]
+  - [[#from-source][From source]]
+  - [[#from-melpa][From MELPA]]
+- [[#usage][Usage]]
+
+* Installation
+
+** From source
+
+Clone this repo, add it to your load path and load the package using
+`require`:
+
+#+BEGIN_SRC elisp
+  (add-to-list 'load-path "~/src/ob-elvish/")
+  (require 'ob-elvish)
+#+END_SRC
+
+** From MELPA
+
+(in process, will update this section when it's available)
+
+* Usage
+
+For an excellent introduction to literate programming using org-mode,
+see Howard Abrams' [[http://www.howardism.org/Technical/Emacs/literate-programming-tutorial.html][Introduction to Literate Programming]].
+
+Once you have both org-mode and ob-elvish loaded, you can type Elvish
+code inside an org-mode src block. For example:
+
+#+begin_example
+  ,#+begin_src elvish
+    put "This is Elvish"
+  ,#+end_src
+#+end_example
+
+If you press =Ctrl-c Ctrl-c= to execute the block, you will see the
+output in a results block below:
+
+#+begin_example
+  #+RESULTS:
+  : ▶ 'This is Elvish'
+#+end_example
+
+You can specify variables using the standard =:var= header argument:
+
+#+begin_example
+  #+begin_src elvish :var n=3
+    put "The result is "(* $n 5)
+  #+end_src
+
+  #+RESULTS:
+  : ▶ 'The result is 15'
+#+end_example
+
+You can use the =:use= header argument to specify modules which should
+be loaded with =use= before executing the code:
+
+#+begin_example
+  #+begin_src elvish :use re
+    pprint (re:find '^(\S+)' "Hello there")
+  #+end_src
+
+  #+RESULTS:
+  ,#+begin_example
+  [
+   &text=	Hello
+   &start=	0
+   &end=	5
+   &groups=	[
+     [
+      &text=	Hello
+      &start=	0
+      &end=	5
+     ]
+     [
+      &text=	Hello
+      &start=	0
+      &end=	5
+     ]
+    ]
+  ]
+  ,#+end_example
+#+end_example
