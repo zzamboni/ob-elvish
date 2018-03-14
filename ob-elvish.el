@@ -1,6 +1,13 @@
-;;; ob-elvish.el --- Org Babel functions for Elvish
+;;; ob-elvish.el --- org-babel functions for Elvish shell
 
-;; Copyright (C) 2018  Diego Zamboni
+;; Copyright (C) 2018 Diego Zamboni
+
+;; Author: Diego Zamboni <diego@zzamboni.org>
+;; Keywords: literate programming, org-mode, elvish, shell
+;; Homepage: https://github.com/zzamboni/ob-elvish
+;; Version: 0.0.1
+
+;;; License:
 
 ;; Permission is hereby granted, free of charge, to any person obtaining a copy
 ;; of this software and associated documentation files (the "Software"), to deal
@@ -19,16 +26,30 @@
 ;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 ;; THE SOFTWARE.
 
-;; Author: Nick Anderson <nick@cmdln.org>
-;; Keywords: tools, convenience
-;; Package-Version: 20180102.1012
-;; URL: https://github.com/nickanderson/ob-cfengine3
-;; Version: 0.0.2
-
 ;;; Commentary:
-;; Execute CFEngine 3 policy inside org-mode src blocks.
+
+;; Execute Elvish code inside org-mode src blocks.
+
+;;; Requirements:
+
+;; - The Elvish shell: https://elvish.io/
+;; - The elvish-mode Emacs major mode: https://github.com/ALSchwalm/elvish-mode
 
 ;;; Code:
+(require 'ob)
+(require 'ob-ref)
+(require 'ob-comint)
+(require 'ob-eval)
+;; possibly require modes required for your language
+
+;; set the language mode to be used for Elvish blocks
+(add-to-list 'org-src-lang-modes '("elvish" . elvish))
+
+;; optionally define a file extension for this language
+(add-to-list 'org-babel-tangle-lang-exts '("elvish" . "elv"))
+
+;; optionally declare default header arguments for this language
+(defvar org-babel-default-header-args:elvish '())
 
 (defvar ob-elvish-command "elvish"
   "Name of command to use for executing Elvish code.")
@@ -36,45 +57,92 @@
 (defvar ob-elvish-command-options ""
   "Option string that should be passed to elvish.")
 
-(defconst ob-elvish-header-args-elvish
-  '(
-    (log . :any)
-    (use . :any)
-    )
-  "Elvish-specific header arguments.")
+;; This function expands the body of a source code block by prepending
+;; module load statements and argument definitions to the body.
+(defun org-babel-expand-body:elvish (body params &optional processed-params)
+  "Expand BODY according to PARAMS, return the expanded body."
+  (let* ((pparams (or processed-params (org-babel-process-params params)))
+	 (vars (org-babel--get-vars pparams))
+	 (use (assq :use pparams))
+	 (uses (if use (split-string (cdr use) ", *") '())))
+    (when (assq :debug params)
+      (message "pparams=%s" pparams)
+      (message "vars=%s" vars)
+      (message "uses=%s" uses))
+    (concat
+     (mapconcat ;; use modules
+      (apply-partially 'concat "use ") uses "\n")
+     "\n"
+     (mapconcat ;; define any variables
+      (lambda (pair)
+	(format "%s = %s"
+		(car pair) (org-babel-var-to-elvish (cdr pair))))
+      vars "\n") "\n" body "\n")))
 
+;; This is the main function which is called to evaluate a code
+;; block.
+;;
+;; This function will evaluate the body of the source code and return
+;; its output. For Elvish the :results header argument has no effect,
+;; the full output of the executed code is always returned.
+;;
+;; In addition to the standard header arguments, you can specify :use
+;; to indicate modules which should be loaded with the `use' statement
+;; before executing the code. You can specify multiple modules
+;; separated by commas.
 (defun org-babel-execute:elvish (body params)
-  "Execute a block of Elvish code.
-This function is called by `org-babel-execute-src-block'.
+  "Execute a block of Elvish code with org-babel.
+This function is called by `org-babel-execute-src-block'"
+  (message "executing Elvish source code block")
+  (let* ((processed-params (org-babel-process-params params))
+         ;; set the session if the session variable is non-nil - not supported yet
+         ;;(session (org-babel-elvish-initiate-session (first processed-params)))
+         ;; variables assigned for use in the block
+         (vars (assoc :vars processed-params))
+         ;; expand the body with `org-babel-expand-body:elvish'
+         (full-body (org-babel-expand-body:elvish
+                     body params processed-params)))
+    (when (assq :debug params)
+      (message "full-body=%s" full-body))
+    (let* ((temporary-file-directory ".")
+           (log (cdr (assoc :log params)))
+           (tempfile (make-temp-file "elvish-")))
+      (with-temp-file tempfile
+        (insert full-body))
+      (unwind-protect
+          (shell-command-to-string
+           (concat
+            ob-elvish-command
+            " "
+            (when log (concat "--log " log ))
+            " "
+            ob-elvish-command-options
+            " "
+            (format "%s" (shell-quote-argument tempfile))))
+        (delete-file tempfile)))))
 
-  A temporary file is constructed containing the BODY of the src
-  block. `ob-elvish-command' is used to execute the
-  temporary file."
+;; This function should be used to assign any variables in params in
+;; the context of the session environment.
+;; (defun org-babel-prep-session:elvish (session params)
+;;   "Prepare SESSION according to the header arguments specified in PARAMS."
+;;   )
 
-  (let* ((temporary-file-directory ".")
-         (log (cdr (assoc :log params)))
-	 (use (cdr (assoc :use params)))
-         (tempfile (make-temp-file "elvish-")))
-    (with-temp-file tempfile
-      (when use (insert (mapconcat
-			 (apply-partially 'concat "use ")
-			 (split-string use ",") "\n")))
-      (insert "\n")
-      (insert body))
-    (unwind-protect
-        (shell-command-to-string
-         (concat
-          ob-elvish-command
-          " "
-          (when log (concat "--log " log ))
-          " "
-          ob-elvish-command-options
-          " "
-          (format "%s" (shell-quote-argument tempfile))))
-      (delete-file tempfile))))
+;; Format a variable passed with :var for assignment to an Elvish variable.
+(defun org-babel-var-to-elvish (var)
+  "Convert an elisp var into a string of Elvish source code
+specifying a var of the same value."
+  (format "%S" var))
 
-(add-to-list 'org-src-lang-modes '("elvish" . elvish))
-(add-to-list 'org-babel-tangle-lang-exts '("elvish" . "elv"))
+;; (defun org-babel-elvish-table-or-string (results)
+;;   "If the results look like a table, then convert them into an
+;; Emacs-lisp table, otherwise return the results as a string."
+;;   )
+
+;; (defun org-babel-elvish-initiate-session (&optional session)
+;;   "If there is not a current inferior-process-buffer in SESSION then create.
+;; Return the initialized session."
+;;   (unless (string= session "none")
+;;     ))
 
 (provide 'ob-elvish)
-;;; ob-cfengine3.el ends here
+;;; ob-elvish.el ends here
