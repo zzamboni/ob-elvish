@@ -60,7 +60,8 @@
 ;; This function expands the body of a source code block by prepending
 ;; module load statements and argument definitions to the body.
 (defun org-babel-expand-body:elvish (body params &optional processed-params)
-  "Expand BODY according to PARAMS, return the expanded body."
+  "Expand BODY according to PARAMS, return the expanded body.
+Optional argument PROCESSED-PARAMS may contain PARAMS preprocessed by ‘org-babel-process-params’."
   (let* ((pparams (or processed-params (org-babel-process-params params)))
          (vars (org-babel--get-vars pparams))
          (use (assq :use pparams))
@@ -76,7 +77,7 @@
      (mapconcat ;; define any variables
       (lambda (pair)
         (format "%s = %s"
-                (car pair) (org-babel-var-to-elvish (cdr pair))))
+                (car pair) (ob-elvish-var-to-elvish (cdr pair))))
       vars "\n") "\n" body "\n")))
 
 ;; This is the main function which is called to evaluate a code
@@ -143,7 +144,7 @@ This function is called by `org-babel-execute-src-block'"
 ;;   )
 
 ;; Format a variable passed with :var for assignment to an Elvish variable.
-(defun org-babel-var-to-elvish (var)
+(defun ob-elvish-var-to-elvish (var)
   "Convert an elisp VAR into a string of Elvish source code specifying a var of the same value."
   (format "%S" var))
 
