@@ -91,7 +91,7 @@
 ;; before executing the code. You can specify multiple modules
 ;; separated by commas.
 (defun org-babel-execute:elvish (body params)
-  "Execute a block of Elvish code with org-babel.
+  "Execute a BODY of Elvish code with org-babel with the given PARAMS.
 This function is called by `org-babel-execute-src-block'"
   (message "executing Elvish source code block")
   (let* ((processed-params (org-babel-process-params params))
@@ -144,8 +144,7 @@ This function is called by `org-babel-execute-src-block'"
 
 ;; Format a variable passed with :var for assignment to an Elvish variable.
 (defun org-babel-var-to-elvish (var)
-  "Convert an elisp var into a string of Elvish source code
-specifying a var of the same value."
+  "Convert an elisp VAR into a string of Elvish source code specifying a var of the same value."
   (format "%S" var))
 
 ;; (defun org-babel-elvish-table-or-string (results)
