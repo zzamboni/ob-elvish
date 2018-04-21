@@ -3,7 +3,7 @@
 ;; Copyright (C) 2018 Diego Zamboni
 
 ;; Author: Diego Zamboni <diego@zzamboni.org>
-;; Keywords: literate programming, org-mode, elvish, shell
+;; Keywords: literate programming, elvish, shell, languages, processes, tools
 ;; Homepage: https://github.com/zzamboni/ob-elvish
 ;; Version: 0.0.1
 
@@ -62,9 +62,9 @@
 (defun org-babel-expand-body:elvish (body params &optional processed-params)
   "Expand BODY according to PARAMS, return the expanded body."
   (let* ((pparams (or processed-params (org-babel-process-params params)))
-	 (vars (org-babel--get-vars pparams))
-	 (use (assq :use pparams))
-	 (uses (if use (split-string (cdr use) ", *") '())))
+         (vars (org-babel--get-vars pparams))
+         (use (assq :use pparams))
+         (uses (if use (split-string (cdr use) ", *") '())))
     (when (assq :debug params)
       (message "pparams=%s" pparams)
       (message "vars=%s" vars)
@@ -75,8 +75,8 @@
      "\n"
      (mapconcat ;; define any variables
       (lambda (pair)
-	(format "%s = %s"
-		(car pair) (org-babel-var-to-elvish (cdr pair))))
+        (format "%s = %s"
+                (car pair) (org-babel-var-to-elvish (cdr pair))))
       vars "\n") "\n" body "\n")))
 
 ;; This is the main function which is called to evaluate a code
@@ -119,7 +119,22 @@ This function is called by `org-babel-execute-src-block'"
             ob-elvish-command-options
             " "
             (format "%s" (shell-quote-argument tempfile))))
-        (delete-file tempfile)))))
+        (delete-file tempfile)))
+    ;; actually execute the source-code block either in a session or
+    ;; possibly by dropping it to a temporary file and evaluating the
+    ;; file.
+    ;;
+    ;; for session based evaluation the functions defined in
+    ;; `org-babel-comint' will probably be helpful.
+    ;;
+    ;; for external evaluation the functions defined in
+    ;; `org-babel-eval' will probably be helpful.
+    ;;
+    ;; when forming a shell command, or a fragment of code in some
+    ;; other language, please preprocess any file names involved with
+    ;; the function `org-babel-process-file-name'. (See the way that
+    ;; function is used in the language files)
+    ))
 
 ;; This function should be used to assign any variables in params in
 ;; the context of the session environment.
