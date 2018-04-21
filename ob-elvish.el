@@ -51,11 +51,15 @@
 ;; optionally declare default header arguments for this language
 (defvar org-babel-default-header-args:elvish '())
 
-(defvar ob-elvish-command "elvish"
-  "Name of command to use for executing Elvish code.")
+(defcustom org-babel-elvish-command "elvish"
+  "Command to use for executing Elvish code."
+  :group 'org-babel
+  :type 'string)
 
-(defvar ob-elvish-command-options ""
-  "Option string that should be passed to elvish.")
+(defcustom ob-elvish-command-options ""
+  "Option string that should be passed to elvish."
+  :group 'org-babel
+  :type 'string)
 
 ;; This function expands the body of a source code block by prepending
 ;; module load statements and argument definitions to the body.
@@ -96,8 +100,6 @@ Optional argument PROCESSED-PARAMS may contain PARAMS preprocessed by ‘org-bab
 This function is called by `org-babel-execute-src-block'"
   (message "executing Elvish source code block")
   (let* ((processed-params (org-babel-process-params params))
-         ;; set the session if the session variable is non-nil - not supported yet
-         ;;(session (org-babel-elvish-initiate-session (first processed-params)))
          ;; variables assigned for use in the block
          (vars (assoc :vars processed-params))
          ;; expand the body with `org-babel-expand-body:elvish'
@@ -113,7 +115,7 @@ This function is called by `org-babel-execute-src-block'"
       (unwind-protect
           (shell-command-to-string
            (concat
-            ob-elvish-command
+            org-babel-elvish-command
             " "
             (when log (concat "--log " log ))
             " "
@@ -121,43 +123,12 @@ This function is called by `org-babel-execute-src-block'"
             " "
             (format "%s" (shell-quote-argument tempfile))))
         (delete-file tempfile)))
-    ;; actually execute the source-code block either in a session or
-    ;; possibly by dropping it to a temporary file and evaluating the
-    ;; file.
-    ;;
-    ;; for session based evaluation the functions defined in
-    ;; `org-babel-comint' will probably be helpful.
-    ;;
-    ;; for external evaluation the functions defined in
-    ;; `org-babel-eval' will probably be helpful.
-    ;;
-    ;; when forming a shell command, or a fragment of code in some
-    ;; other language, please preprocess any file names involved with
-    ;; the function `org-babel-process-file-name'. (See the way that
-    ;; function is used in the language files)
     ))
-
-;; This function should be used to assign any variables in params in
-;; the context of the session environment.
-;; (defun org-babel-prep-session:elvish (session params)
-;;   "Prepare SESSION according to the header arguments specified in PARAMS."
-;;   )
 
 ;; Format a variable passed with :var for assignment to an Elvish variable.
 (defun ob-elvish-var-to-elvish (var)
   "Convert an elisp VAR into a string of Elvish source code specifying a var of the same value."
   (format "%S" var))
-
-;; (defun org-babel-elvish-table-or-string (results)
-;;   "If the results look like a table, then convert them into an
-;; Emacs-lisp table, otherwise return the results as a string."
-;;   )
-
-;; (defun org-babel-elvish-initiate-session (&optional session)
-;;   "If there is not a current inferior-process-buffer in SESSION then create.
-;; Return the initialized session."
-;;   (unless (string= session "none")
-;;     ))
 
 (provide 'ob-elvish)
 ;;; ob-elvish.el ends here
