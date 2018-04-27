@@ -121,7 +121,7 @@ This function is called by `org-babel-execute-src-block'"
             " "
             ob-elvish-command-options
             " "
-            (format "%s" (shell-quote-argument tempfile))))
+            (shell-quote-argument tempfile)))
         (delete-file tempfile)))
     ))
 
